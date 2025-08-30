@@ -225,6 +225,12 @@ def baixar_historico_geral_pdf(request):
 # ------------------  Login  ------------------
 
 def login_view(request):
+    if request.user.is_authenticated:
+        if request.user.nivel == 'gerente':
+            return redirect('listar_pontos')
+        else:
+            return redirect('registrar_ponto')
+
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -393,21 +399,23 @@ def importar_json_admin(request):
 
     return render(request, "admin/importar_json.html")
 
-    
 @user_passes_test(is_gerente)
 def formulario_view(request):
+    import re
+
     mensagem = ''
     colaborador = None
-    lideres = Lider.objects.all()  # para preencher o select
+    lideres = Lider.objects.all()
 
     if request.method == 'POST':
         cpf = request.POST.get('cpf')
+        cpf = re.sub(r'\D', '', cpf)  # Remove pontos e traços do CPF
+
         nome = request.POST.get('nome')
         lider_id = request.POST.get('lider')
         is_active_raw = request.POST.get('is_active', 'ativo')
 
         is_active = (is_active_raw == 'ativo')
- 
         lider = Lider.objects.filter(id=lider_id).first() if lider_id else None
 
         if 'buscar' in request.POST:
@@ -443,6 +451,7 @@ def formulario_view(request):
         'colaborador': colaborador,
         'lideres': lideres
     })
+
 
 def formulario_etiqueta(request):
     """Exibe o formulário"""
